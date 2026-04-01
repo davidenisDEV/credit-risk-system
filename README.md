@@ -18,23 +18,23 @@ Se a API de pagamento for síncrona e tentar calcular fraudes, checar histórico
 Este projeto não utiliza uma stack única por acaso. Cada tecnologia foi escolhida para resolver um problema específico do pipeline de dados:
 
 ### 1. Ingestão de Dados com Go (Fiber)
-* **O Papel:** O "Recepcionista".
+* O "Recepcionista".
 * **Por que Go?** Golang possui uma gestão de concorrência (Goroutines) incrivelmente leve. A API em Go não processa regras de negócio; ela apenas valida o payload e "enfileira" o pedido em milissegundos, retornando um `202 Accepted` para o cliente. Isso garante que a API não caia mesmo sob ataques ou picos extremos de tráfego.
 
 ### 2. Mensageria com RabbitMQ
-* **O Papel:** O "Amortecedor" (Buffer).
+* O "Amortecedor" (Buffer).
 * **Por que RabbitMQ?** Ele atua como um *Message Broker* que absorve os picos de requisição. Se a API receber 10.000 transações em 1 segundo, o banco de dados não será bombardeado. As mensagens ficam seguras na fila, esperando que os workers tenham capacidade de processá-las no seu próprio ritmo.
 
 ### 3. Motor de Regras com Python (Pandas/Pydantic)
-* **O Papel:** O "Cérebro".
+* O "Cérebro".
 * **Por que Python?** Embora Go seja rápido para rede, Python é o rei da análise de dados. Usamos **Pydantic** para garantir contratos de dados estritos (se o JSON mudar, a aplicação não quebra, ela rejeita graciosamente). Usamos **Pandas** para facilitar a futura injeção de modelos de Machine Learning (como Isolation Forests para detecção de anomalias).
 
 ### 4. Persistência e Idempotência (PostgreSQL + SQLAlchemy)
-* **O Papel:** A "Fonte da Verdade".
+* A "Fonte da Verdade".
 * **O Diferencial Técnico:** Em sistemas distribuídos, uma mensagem pode ser entregue duas vezes (queda de rede, timeout). O sistema implementa **Idempotência**: antes de salvar ou processar um risco, o worker consulta o banco. Se a transação (`transaction_id`) já existir, ela é descartada. Isso evita dupla cobrança e corrupção de dados.
 
 ### 5. Observabilidade de Negócio com Streamlit
-* **O Papel:** Os "Olhos" da operação.
+* Os "Olhos" da operação.
 * **Por que?** Código rodando no terminal não gera valor visual para stakeholders. O dashboard consome os dados processados e entrega métricas vitais em tempo real (Taxa de Rejeição, Volume Financeiro, Distribuição de Fraudes), fechando o ciclo do dado.
 
 ---
