@@ -3,10 +3,10 @@ import pandas as pd
 from sqlalchemy import create_engine
 import plotly.express as px
 
-# Configuração da página (deve ser a primeira chamada do Streamlit)
+# Configuração da página 
 st.set_page_config(page_title="Risk System Dashboard", page_icon="🛡️", layout="wide")
 
-# 1. Conexão com o Banco de Dados (usando o DNS interno do Docker)
+# 1. Conexão com o Banco de Dados
 DB_URL = "postgresql://admin:admin_password@postgres:5432/risk_database"
 
 @st.cache_resource
@@ -15,7 +15,6 @@ def get_engine():
 
 def load_data():
     engine = get_engine()
-    # Puxa os dados ordenados pelos mais recentes
     query = "SELECT * FROM transactions ORDER BY created_at DESC"
     try:
         df = pd.read_sql(query, engine)
@@ -30,7 +29,6 @@ def load_data():
 st.title("🛡️ Motor de Risco - Monitoramento em Tempo Real")
 st.markdown("Acompanhamento de microtransações e detecção de anomalias/fraudes.")
 
-# Botão de atualização manual
 col_btn, _ = st.columns([1, 5])
 with col_btn:
     if st.button("🔄 Atualizar Dados"):
@@ -81,7 +79,6 @@ else:
 
     # --- TABELA DE DADOS ---
     st.markdown("### Últimas Transações Processadas")
-    # Formatando colunas para exibição amigável
     df_display = df.copy()
     df_display['created_at'] = pd.to_datetime(df_display['created_at']).dt.strftime('%d/%m/%Y %H:%M:%S')
     st.dataframe(df_display, use_container_width=True, hide_index=True)
