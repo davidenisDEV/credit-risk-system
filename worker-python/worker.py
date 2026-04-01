@@ -17,7 +17,7 @@ engine = create_engine(DB_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
-# Modelo da Tabela no Banco de Dados
+# Tabela no Banco de Dados
 class TransactionRecord(Base):
     __tablename__ = "transactions"
     
@@ -28,7 +28,6 @@ class TransactionRecord(Base):
     status = Column(String)
     created_at = Column(DateTime, default=datetime.utcnow)
 
-# Cria as tabelas no banco (se não existirem)
 Base.metadata.create_all(bind=engine)
 
 # ==========================================
@@ -56,14 +55,13 @@ def callback(ch, method, properties, body):
         raw_data = json.loads(body)
         transaction = Transaction(**raw_data)
         
-        # --- IDEMPOTÊNCIA: Checa se a transação já existe ---
         exists = db.query(TransactionRecord).filter(TransactionRecord.transaction_id == transaction.transaction_id).first()
         if exists:
             print(f"[!] IDEMPOTÊNCIA: Transação {transaction.transaction_id} já processada anteriormente. Ignorando.")
             ch.basic_ack(delivery_tag=method.delivery_tag)
             return
 
-        # --- PROCESSAMENTO ---
+       
         print(f"\n[-] Analisando transação: {transaction.transaction_id}...")
         df = pd.DataFrame([transaction.model_dump()])
         status = analyze_risk(df)
